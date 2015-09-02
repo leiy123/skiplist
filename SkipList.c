@@ -28,6 +28,8 @@ static struct Node NIL = {0x7fffffff, 0, NULL}; //tail node const
 NodePtr initNodeWithLevel(int level, int key){
 	int i;
 	NodePtr nodeptr = (NodePtr)malloc(sizeof(struct Node));
+	nodeptr->element = key;
+	nodeptr->level = level;
 	//int totalSize = sizeof(Node) + sizeof(NodePtr) * level;
 	nodeptr->next = (NodePtr *)malloc(sizeof(NodePtr) * (level+1));
 	for(i = 0; i <= level; i++){
@@ -38,7 +40,7 @@ NodePtr initNodeWithLevel(int level, int key){
 
 SkiplistPtr initSkiplist(){
 	SkiplistPtr skiplistptr; //structure declaration ? space allocation
-	skiplistptr = (SkiplistPtr)malloc(sizeof(NodePtr) + sizeof(int));
+	skiplistptr = (SkiplistPtr)malloc(sizeof(struct Skiplist)); //sizeof(NodePtr) + sizeof(int)
 	skiplistptr->head = (NodePtr)initNodeWithLevel(MaxLevel, 0x7fffffff);
 	skiplistptr->currentmaxLevel = 0;
 }
@@ -82,28 +84,55 @@ void insertKey(SkiplistPtr skiplistPtr, int key){
 			int i;
 			for( i = level; i > 0; i--){
 				p = skiplistPtr->head;
-				for(nodePtr = p->next[level]; nodePtr != &NIL && nodePtr->element < key;){
+				for(nodePtr = p->next[i]; nodePtr != &NIL && nodePtr->element < key;){
 					p = nodePtr;
-					nodePtr = nodePtr->next[level];
+					nodePtr = nodePtr->next[i];
 				}
-				targetPtr->next[level] = p->next[level];
-				p->next[level] = targetPtr;
+				targetPtr->next[i] = p->next[i];
+				p->next[i] = targetPtr;
 			}
 			if(skiplistPtr->currentmaxLevel < level)
 				skiplistPtr->currentmaxLevel = level;
 		}
 }
 
+void deleteKey(SkiplistPtr skiplistPtr, int key){
+	NodePtr nodePtr = searchKey(skiplistPtr, key);
+	if( nodePtr == skiplistPtr ->head || nodePtr->element != key ) return;
+	else{
+		NodePtr p, q;	
+		int i;
+		for(i = nodePtr->level; i >= 0; i--){
+			p = skiplistPtr->head;
+			for(q = p->next[i]; q != nodePtr;  ){
+				p = q;
+				q = q->next[i];
+			}
+			p->next[i] = q->next[i];
+		}
+		free(nodePtr);
+		while(skiplistPtr->currentmaxLevel != 0 && skiplistPtr->head->next[skiplistPtr->currentmaxLevel] == &NIL){
+			skiplistPtr->currentmaxLevel--;
+			}
+		}
+}
+
+
 void main(){
 	SkiplistPtr skiplistPtr = initSkiplist();
 	insertKey(skiplistPtr, 100);
-	/*
+	insertKey(skiplistPtr, 50);
+	insertKey(skiplistPtr, 110);
+	deleteKey(skiplistPtr, 50);
+	deleteKey(skiplistPtr, 110);
+	deleteKey(skiplistPtr, 100);
+	printf("%d\n", skiplistPtr->currentmaxLevel);
 	NodePtr p = skiplistPtr->head;
 	while(p != &NIL){
-		printf("%-10000d %d", p->element, p->level);
+		printf("%-4d %d\n", p->element, p->level);
 		p = p->next[0];
 		}
-		*/
+		
 	/*
 	int i;
 	¡ffor(i = 0; i < 10000; i++){
@@ -133,28 +162,8 @@ void main(){
 
 
 
-void deleteKey(SkiplistPtr skiplistPtr, int key){
-	NodePtr nodePtr = searchKey(skiplistPtr, key);
-	if( nodePtr == skiplistPtr ->head || nodePtr->element != key ) return;
-	else{
-		NodePtr p, q;	
-		int i;
-		for(i = nodePtr->level; i >= 0; i--){
-			p = skiplistPtr->head;
-			for(q = p->next[i]; q != nodePtr;  ){
-				p = q;
-				q = q->next[i]
-			}
-			p->next[i] = q->next[i];
-		}
-		free(nodePtr);
-		while(skiplistPtr->head[skiplistPtr->currentmaxLevel] == NIL){
-			currentmaxLevel--;
-			}
-		}
-}
 
-
+/*
 void releaseSkiplist(SkipListPtr skipListPtr){
 	NodePtr p, q;
 	p = skipListPtr->head->next[0];
@@ -164,7 +173,8 @@ void releaseSkiplist(SkipListPtr skipListPtr){
 	}
 	free(&NIL);
 	free(skipListPtr);//whether to release the skipList structure
-}
+	}
+
 */
 
 
