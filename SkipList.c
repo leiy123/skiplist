@@ -39,6 +39,7 @@ NodePtr initNodeWithLevel(int level, int key){
 }
 
 SkiplistPtr initSkiplist(){
+	srand(time(0));
 	SkiplistPtr skiplistptr; //structure declaration ? space allocation
 	skiplistptr = (SkiplistPtr)malloc(sizeof(struct Skiplist)); //sizeof(NodePtr) + sizeof(int)
 	skiplistptr->head = (NodePtr)initNodeWithLevel(MaxLevel, 0x7fffffff);
@@ -62,21 +63,25 @@ NodePtr searchKey(SkiplistPtr skiplistPtr, int key){
 	}
 	return p; 
 }
-
-int randomIntGenerate(int range){
-	srand((int)time(0));
-	int randValue;
-	randValue = rand()% range; // 0-MaxNum
-	return randValue;
-	//reference to leveldb
-}	
+int genLevel(int range){
+	int i, height;
+	volatile int temp;
+	height = 0;
+	for(i = 0; i < range; i++)
+		{
+		temp = rand();
+		if(temp % 2) height++;     //odd ,up to range probability(1/2)
+			else return height;
+		}
+}
+	//reference to leveldb	
 void insertKey(SkiplistPtr skiplistPtr, int key){
 	NodePtr nodePtr = searchKey(skiplistPtr, key);
 	
 		if(nodePtr != skiplistPtr->head && nodePtr->element == key) {
 			return; //skiplist contains the key
 		}else{
-			int level = randomIntGenerate(MaxLevel);
+			int level = genLevel(MaxLevel);
 			NodePtr targetPtr = initNodeWithLevel(level, key);
 			targetPtr->next[0] = nodePtr->next[0];
 			nodePtr->next[0] = targetPtr; //no-Targeted manifests level0 examined
@@ -117,12 +122,26 @@ void deleteKey(SkiplistPtr skiplistPtr, int key){
 		}
 }
 
+void releaseSkiplist(SkiplistPtr skipListPtr){
+	NodePtr p, q;
+	p = skipListPtr->head->next[0];
+	while(p != &NIL){
+		q = p->next[0];
+		free(p);
+	}
+	free(&NIL);
+	free(skipListPtr);//whether to release the skipList structure
+}
+
+
 
 void main(){
 	SkiplistPtr skiplistPtr = initSkiplist();
-	insertKey(skiplistPtr, 100);
+	/*
 	insertKey(skiplistPtr, 50);
+	insertKey(skiplistPtr, 100);
 	insertKey(skiplistPtr, 110);
+	
 	deleteKey(skiplistPtr, 50);
 	deleteKey(skiplistPtr, 110);
 	deleteKey(skiplistPtr, 100);
@@ -132,32 +151,35 @@ void main(){
 		printf("%-4d %d\n", p->element, p->level);
 		p = p->next[0];
 		}
+		*/
 		
-	/*
+	
 	int i;
-	¡ffor(i = 0; i < 10000; i++){
-		int key = randomIntGenerate(10000);
+	for(i = 0; i < 10000; i++){
+		int key = rand();
 		insertKey(skiplistPtr, key);
 	}
-	*/
-	/*
-	insertKey(skiplistPtr, 50);
-	insertKey(skiplistPtr, 110);
+
+	
+	
 	int flag = 1;
-	NodePtr nodeptr, q; 
-	nodeptr = skiplistPtr->head->next[0];
-	while(nodeptr != &NIL ){
-		q = nodeptr->next[0];
-		if(q != &NIL){
-			if(nodeptr->element > q->element){
-				flag = 0;
-				break;
+	NodePtr nodeptr, q;
+	int level = skiplistPtr->currentmaxLevel;
+	for(; level >= 0; level--){
+		nodeptr = skiplistPtr->head->next[level];
+		while(nodeptr != &NIL ){
+			q = nodeptr->next[level];
+			if(q != &NIL){
+				if(nodeptr->element > q->element){
+					flag = 0;
+					break;
+				}
+			}
+			nodeptr = q;
 			}
 		}
-		nodeptr = q;
-	}
-	printf("%s", (flag == 1)? "ture":"false");	
-	*/
+	printf("current level is %s\n",skiplistPtr->currentmaxLevel);
+	printf("%s\n", (flag == 1)? "ture":"false");	
 }
 
 
@@ -178,34 +200,6 @@ void releaseSkiplist(SkipListPtr skipListPtr){
 */
 
 
-
-//unit test
-//randomly generate 10^4 
-/*
-void main(){
-	SkiplistPtr skiplistPtr = initSkiplist() ;
-	inserKey(skiplistPtr, 100);
-	/*
-	¡ffor(int i = 0; i < 10000; i++){
-		int key = randomIntGenerate(10000);
-		insertKey(skiplistPtr, key);
-	}
-	bool flag = true;
-	NodePtr nodeptr, q; 
-	nodeptr = skiplistPtr->head->next[0];
-	while(nodeptr != NIL ){
-		q = nodeptr->next[0];
-		if(q != NIL){
-			if(nodeptr->element > q->element){
-				flag = false;
-				break;
-			}
-		}
-		nodeptr = p;
-	}
-	printf("%s", (flag == true)? "ture":"false");	
-}
-*/
 
 
 
